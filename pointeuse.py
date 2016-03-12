@@ -63,7 +63,10 @@ class PointeuseReader(BeidReader):
             except ObjectDoesNotExist:
                 p.pointage_set.create(checkin=timezone.now())
                 print("Nouveau pointage pour la journée")
+
 if __name__ == "__main__":
     p = PointeuseReader()
     print("Application started")
-    input("Press ENTER to exit...\n")
+
+    while True:
+        pass
