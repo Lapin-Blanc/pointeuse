@@ -1,0 +1,40 @@
+#! /bin/sh
+# /etc/init.d/pointage
+
+### BEGIN INIT INFO
+# Provides: pointage
+# Required-Start: $remote_fs $syslog
+# Required-Stop: $remote_fs $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Start pointage application
+# Description: Start both pointage management and administration site
+### END INIT INFO
+
+USER=pi
+HOME=/home/pi
+
+export USER HOME
+
+case "$1" in
+ start)
+  echo "Starting administration site"
+  su - $USER -c "python3 $HOME/pointeuse/manage.py runserver 0.0.0.0:8000 &"
+  echo "Starting reader manager"
+  su - $USER -c "python3 $HOME/pointeuse/pointeuse.py &"
+  ;;
+
+ stop)
+  echo "Stopping administration site"
+  pkill -f ".*pointeuse.*runserver"
+  echo "Stopping reader manager"
+  pkill -f ".*pointeuse.py"
+  ;;
+
+ *)
+  echo "Usage: /etc/init.d/pointage {start|stop}"
+  exit 1
+  ;;
+esac
+
+exit 0
