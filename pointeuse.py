@@ -51,6 +51,8 @@ class PointeuseReader(BeidReader):
         gpio.output(RED_LED, False)
         lcd.clear()
         lcd.message(datetime.now().strftime("%H:%M") + "\nInsert card...")
+        lcd_free_flag = True
+
 
     def on_inserted(self, card):
         lcd_free_flag = False
@@ -109,7 +111,6 @@ class PointeuseReader(BeidReader):
         lcd.clear()
         lcd.message(p_name + "\n" + p_message)
         ############################
-        lcd_free_flag = True
         
 if __name__ == "__main__":
     p = PointeuseReader()
