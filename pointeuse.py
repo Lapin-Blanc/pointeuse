@@ -35,7 +35,11 @@ gpio.output(GREEN_LED, False)
 
 lcd = LCD()
 lcd.clear()
-lcd.message("System ready\nInsert card...")
+lcd.message(datetime.now().strftime("%H:%M") + "\nInsert card...")
+
+# Global variables
+
+lcd_free_flag = True
 
 class PointeuseReader(BeidReader):
 
@@ -46,10 +50,10 @@ class PointeuseReader(BeidReader):
         gpio.output(GREEN_LED, False)
         gpio.output(RED_LED, False)
         lcd.clear()
-        lcd.message("System ready\nInsert card...")
-
+        lcd.message(datetime.now().strftime("%H:%M") + "\nInsert card...")
 
     def on_inserted(self, card):
+        lcd_free_flag = False
         gpio.output(RED_LED, True)
         lcd.clear()
         lcd.message("Reading infos...")
@@ -105,10 +109,14 @@ class PointeuseReader(BeidReader):
         lcd.clear()
         lcd.message(p_name + "\n" + p_message)
         ############################
+        lcd_free_flag = True
         
 if __name__ == "__main__":
     p = PointeuseReader()
     print("Application started")
 
     while True:
-        sleep(3600)
+        if lcd_free_flag == True:
+            lcd.clear()
+            lcd.message(datetime.now().strftime("%H:%M") + "\nInsert card...")
+        sleep(60)
