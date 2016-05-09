@@ -10,7 +10,7 @@ GENDER_CHOICES = (
 
 class Personne(models.Model):
 
-    num_nat = models.CharField("Numéro national", max_length=11, unique=True)
+    num_nat = models.CharField("Numéro national", max_length=11)
     num_carte = models.CharField("Numéro de carte", max_length=100)
 
     nom = models.CharField(max_length=100)

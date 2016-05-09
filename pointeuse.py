@@ -35,7 +35,7 @@ gpio.output(GREEN_LED, False)
 
 lcd = LCD()
 lcd.clear()
-lcd.message(datetime.now().strftime("%H:%M") + "\nInsert card...")
+lcd.message(datetime.now().strftime("%H:%M") + "\nIntroduire carte")
 
 # Global variables
 
@@ -50,7 +50,7 @@ class PointeuseReader(BeidReader):
         gpio.output(GREEN_LED, False)
         gpio.output(RED_LED, False)
         lcd.clear()
-        lcd.message(datetime.now().strftime("%H:%M") + "\nInsert card...")
+        lcd.message(datetime.now().strftime("%H:%M") + "\nIntroduire carte")
         lcd_free_flag = True
 
 
@@ -58,7 +58,7 @@ class PointeuseReader(BeidReader):
         lcd_free_flag = False
         gpio.output(RED_LED, True)
         lcd.clear()
-        lcd.message("Reading infos...")
+        lcd.message("Lecture infos")
 
         infos = card.read_infos()
         print("---------------------")
@@ -69,29 +69,26 @@ class PointeuseReader(BeidReader):
         gpio.output(GREEN_LED, True)
         gpio.output(RED_LED, False)
 
+        lcd.clear()
+        lcd.message("Verification\nPersonne")
         try:
-            Personne.objects.get(num_nat=infos["num_nat"])
+            p = Personne.objects.get(num_nat=infos["num_nat"])
+            if p.num_carte != infos['num_carte']:
+                Personne.objects.filter(num_nat=infos["num_nat"]).update(**infos)
+                print("\nPersonne mise à jour :")
+
         except ObjectDoesNotExist:
-            p = Personne(**infos).save()
+            p = Personne(**infos)
+            p.save()
             print("Personne créée :", p)
 
-        try:
-            Personne.objects.get(num_nat=infos["num_nat"])
-            Personne.objects.filter(num_nat=infos["num_nat"]).update(**infos)
-            print("\nPersonne mise à jour :")
-        except ObjectDoesNotExist:
-            p = Personne(**infos).save()
-            print("\nPersonne créée :", p)
-
-        p = Personne.objects.get(num_nat=infos["num_nat"])
-        print(p)
         p_name = p.nom + " " + p.prenoms.split()[0]
         p_message = datetime.now().strftime("%H:%M") 
 
         if not p.pointage_set.filter(checkin__date = timezone.now().date()):
             p.pointage_set.create(checkin=timezone.now())
             print("Premier pointage de la journée")
-            p_message = p_message + " CHECKIN"
+            p_message = p_message + " ARRIVEE"
             
         else:
             try:
@@ -102,11 +99,11 @@ class PointeuseReader(BeidReader):
                     pointage_started.checkout = timezone.now()
                     pointage_started.save()
                     print("Pointage clôturé")
-                    p_message = p_message + " CHECKOUT"
+                    p_message = p_message + " SORTIE"
             except ObjectDoesNotExist:
                 p.pointage_set.create(checkin=timezone.now())
                 print("Nouveau pointage pour la journée")
-                p_message = p_message + " CHECKIN"
+                p_message = p_message + " ARRIVEE"
         ############################
         lcd.clear()
         lcd.message(p_name + "\n" + p_message)
@@ -115,9 +112,11 @@ class PointeuseReader(BeidReader):
 if __name__ == "__main__":
     p = PointeuseReader()
     print("Application started")
+    gpio.output(GREEN_LED, False)
+    gpio.output(RED_LED, False)
 
     while True:
         if lcd_free_flag == True:
             lcd.clear()
-            lcd.message(datetime.now().strftime("%H:%M") + "\nInsert card...")
+            lcd.message(datetime.now().strftime("%H:%M") + "\nIntroduire carte")
         sleep(60)
