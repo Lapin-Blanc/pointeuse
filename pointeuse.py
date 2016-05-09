@@ -102,10 +102,11 @@ class PointeuseReader(BeidReader):
                 print("Nouveau pointage pour la journée")
                 p_message = p_message + " ARRIVEE"
         ############################
-        gpio.output(GREEN_LED, True)
-        gpio.output(RED_LED, False)
         lcd.clear()
         lcd.message(p_name + "\n" + p_message)
+        sleep(1)
+        gpio.output(GREEN_LED, True)
+        gpio.output(RED_LED, False)
         ############################
         
 if __name__ == "__main__":
