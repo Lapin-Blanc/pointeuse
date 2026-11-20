@@ -1,0 +1,5 @@
+<div class="champ">
+  {% if f.field.widget.input_type == "checkbox" %}<label>{{ f }} {{ f.label }}</label>{% else %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endif %}
+  {% if f.help_text %}<div class="aide">{{ f.help_text }}</div>{% endif %}
+  {{ f.errors }}
+</div>

@@ -1,0 +1,40 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titre %}{% endblock %} · {{ APP.NOM }}</title>
+  <link rel="stylesheet" href="{% static 'pointages/style.css' %}">
+  {% block entete %}{% endblock %}
+</head>
+<body class="{% block classe_body %}{% endblock %}">
+{% if user.is_authenticated %}
+<header class="barre">
+  <a class="logo" href="{% url 'accueil' %}"><span class="logo-icone">⏱</span> {{ APP.NOM }}</a>
+  <input type="checkbox" id="menu-bascule" class="menu-bascule" aria-label="Menu">
+  <label for="menu-bascule" class="menu-bouton">☰</label>
+  <nav class="menu">
+    {% if est_admin %}<a href="{% url 'tableau_de_bord' %}" class="{% if request.resolver_match.url_name == 'tableau_de_bord' %}actif{% endif %}">Vision RH</a>{% endif %}
+    <a href="{% url 'pointage' %}" class="{% if request.resolver_match.url_name == 'pointage' %}actif{% endif %}">Pointer</a>
+    <a href="{% url 'pointages_liste' %}" class="{% if request.resolver_match.url_name == 'pointages_liste' %}actif{% endif %}">Pointages</a>
+    <a href="{% url 'employes' %}" class="{% if 'employe' in request.resolver_match.url_name or request.resolver_match.url_name == 'badge' %}actif{% endif %}">Employés</a>
+    {% if est_admin %}
+    <a href="{% url 'bilan' %}" class="{% if request.resolver_match.url_name == 'bilan' %}actif{% endif %}">Bilan mensuel</a>
+    <a href="{% url 'admin:pointages_conge_changelist' %}">Congés</a>
+    <a href="{% url 'journal' %}" class="{% if request.resolver_match.url_name == 'journal' %}actif{% endif %}">Journal</a>
+    <a href="{% url 'admin:index' %}">Paramètres</a>
+    {% endif %}
+    <span class="menu-user">
+      <a href="{% url 'password_change' %}" title="Changer le mot de passe">👤 {{ user.get_username }}{% if est_admin %} · Admin{% else %} · Pointeur{% endif %}</a>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="lien">Déconnexion</button></form>
+    </span>
+  </nav>
+</header>
+{% endif %}
+<main class="contenu">
+  {% for m in messages %}<div class="alerte {{ m.tags }}">{{ m }}</div>{% endfor %}
+  {% block contenu %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% extends "pointages/base.html" %}
+{% block titre %}Connexion{% endblock %}
+{% block classe_body %}page-connexion{% endblock %}
+{% block contenu %}
+<div class="boite-connexion">
+  <h1>⏱ {{ APP.NOM }}</h1>
+  <p class="sous-titre" style="text-align:center">Pointage et gestion des employés</p>
+  <form method="post">{% csrf_token %}
+    {% if form.errors %}<div class="alerte error">Identifiant ou mot de passe incorrect.</div>{% endif %}
+    <div class="champ"><label for="id_username">Identifiant</label>{{ form.username }}</div>
+    <div class="champ"><label for="id_password">Mot de passe</label>{{ form.password }}</div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="bouton">Se connecter</button>
+  </form>
+</div>
+{% endblock %}

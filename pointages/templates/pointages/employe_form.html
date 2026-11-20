@@ -1,0 +1,18 @@
+{% extends "pointages/base.html" %}
+{% block titre %}{% if personne %}Modifier {{ personne }}{% else %}Nouvel employé{% endif %}{% endblock %}
+{% block contenu %}
+<h1>{% if personne %}Modifier la fiche de {{ personne }}{% else %}Nouvel employé{% endif %}</h1>
+<p class="sous-titre">{% if not est_admin %}Vous pourrez corriger cette fiche pendant 24 h après sa création. Ensuite, seul l'administrateur peut la modifier.{% else %}Le matricule et le badge QR sont créés automatiquement.{% endif %}</p>
+<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for titre, champs in form.groupes %}
+  <fieldset><legend>{{ titre }}</legend><div class="form-grille">
+    {% for f in champs %}{% include "pointages/_champ.html" %}{% endfor %}
+  </div></fieldset>
+  {% endfor %}
+  <div class="actions">
+    <button class="bouton">Enregistrer</button>
+    <a class="bouton secondaire" href="{% if personne %}{% url 'employe_fiche' personne.pk %}{% else %}{% url 'employes' %}{% endif %}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

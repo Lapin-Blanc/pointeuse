@@ -1,0 +1,14 @@
+[Unit]
+Description=Pointage Max - application web
+After=network.target
+
+[Service]
+User=@UTILISATEUR@
+WorkingDirectory=@DOSSIER@
+Environment=POINTAGE_HOSTS=@HOSTS@
+Environment=POINTAGE_TZ=Africa/Casablanca
+ExecStart=@DOSSIER@/venv/bin/gunicorn pointeuse.wsgi --bind 0.0.0.0:8000 --workers 2 --timeout 60
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

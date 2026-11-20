@@ -1,0 +1,18 @@
+{% extends "pointages/base.html" %}
+{% block titre %}Modifier un pointage{% endblock %}
+{% block contenu %}
+<h1>Modifier le pointage</h1>
+<p class="sous-titre">{{ p.personne }} · {{ p.checkin|date:"l j F Y" }} · saisi par {{ p.saisi_par|default:"la borne" }} ({{ p.get_source_display }})</p>
+<div class="carte" style="max-width: 760px">
+  <form method="post" novalidate>{% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="form-grille">
+      {% for f in form %}<div class="champ"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}</div>{% endfor %}
+    </div>
+    <div class="actions" style="margin-top:14px">
+      <button class="bouton">Enregistrer</button>
+      <a class="bouton secondaire" href="{% url 'pointages_liste' %}">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

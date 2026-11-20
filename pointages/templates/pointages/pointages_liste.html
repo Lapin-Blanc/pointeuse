@@ -1,0 +1,46 @@
+{% extends "pointages/base.html" %}
+{% block titre %}Pointages{% endblock %}
+{% block contenu %}
+<div class="entete-page">
+  <div>
+    <h1>Liste des pointages</h1>
+    <p class="sous-titre">{% if est_admin %}Tous les pointages{% else %}Les pointages que vous avez saisis. Seuls ceux d'aujourd'hui sont modifiables.{% endif %}</p>
+  </div>
+</div>
+<div class="carte">
+  <form class="filtres" method="get">
+    <div><label for="q">Employé</label><input id="q" name="q" value="{{ q }}" placeholder="Nom ou matricule"></div>
+    <div><label for="du">Du</label><input type="date" id="du" name="du" value="{{ du }}"></div>
+    <div><label for="au">Au</label><input type="date" id="au" name="au" value="{{ au }}"></div>
+    <div><label for="id_ville">Ville</label>{{ lieu.ville }}</div>
+    <div><label for="id_service">Service</label>{{ lieu.service }}</div>
+    <div><label><input type="checkbox" name="ouverts" value="1" {% if ouverts %}checked{% endif %}> Sans sortie</label></div>
+    <button class="bouton">Filtrer</button>
+  </form>
+</div>
+<div class="carte tableau-wrap">
+  <table>
+    <thead><tr><th>Date</th><th>Employé</th><th>Arrivée</th><th>Sortie</th><th>Durée</th><th>Lieu</th><th>Source</th><th>Saisi par</th><th></th></tr></thead>
+    <tbody>
+    {% for p in page %}
+      <tr>
+        <td>{{ p.checkin|date:"D d/m/Y" }}</td>
+        <td><a href="{% url 'employe_fiche' p.personne.pk %}">{{ p.personne }}</a></td>
+        <td>{{ p.checkin|time:"H:i" }}</td>
+        <td>{% if p.checkout %}{{ p.checkout|time:"H:i" }}{% else %}<span class="etat rouge">aucune</span>{% endif %}</td>
+        <td>{{ p.duration|default:"—" }}</td>
+        <td>{{ p.ville|default:"" }}{% if p.ville and p.service %} · {% endif %}{{ p.service|default:"" }}</td>
+        <td><span class="etat gris">{{ p.get_source_display }}</span></td>
+        <td>{{ p.saisi_par|default:"borne" }}</td>
+        <td class="actions">
+          {% if p.modifiable %}<a class="bouton petit secondaire" href="{% url 'pointage_modifier' p.pk %}">Modifier</a>{% else %}<span class="etat gris" title="Contactez l'administrateur">🔒 verrouillé</span>{% endif %}
+          {% if est_admin %}<form method="post" action="{% url 'pointage_supprimer' p.pk %}" data-confirmer="Supprimer ce pointage ?">{% csrf_token %}<input type="hidden" name="suite" value="{{ request.get_full_path }}"><button class="bouton petit danger">Supprimer</button></form>{% endif %}
+        </td>
+      </tr>
+    {% empty %}<tr><td colspan="9" class="vide">Aucun pointage.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% include "pointages/_pagination.html" %}
+</div>
+{% endblock %}
+{% block scripts %}{% load static %}<script src="{% static 'pointages/confirmer.js' %}"></script>{% endblock %}

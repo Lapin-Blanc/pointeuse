@@ -1,0 +1,74 @@
+{% extends "pointages/base.html" %}
+{% block titre %}{{ p }}{% endblock %}
+{% block contenu %}
+<div class="carte">
+  <div class="entete-page" style="margin:0">
+    <div class="fiche-tete">
+      {% if p.photo %}<img class="avatar" src="{{ p.photo.url }}" alt="">{% else %}<span class="avatar">{{ p.nom|first }}{{ p.prenoms|first }}</span>{% endif %}
+      <div>
+        <h1>{{ p.nom }} {{ p.prenoms }}</h1>
+        <p class="sous-titre" style="margin:0">{{ p.matricule }}{% if p.poste %} · {{ p.poste }}{% endif %}{% if p.service %} · {{ p.service }}{% endif %}{% if p.ville %} · {{ p.ville }}{% endif %}
+          {% if p.actif %}<span class="etat vert">actif</span>{% else %}<span class="etat gris">parti</span>{% endif %}</p>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="bouton secondaire" href="{% url 'badge' p.pk %}">🪪 Badge QR</a>
+      {% if modifiable %}<a class="bouton" href="{% url 'employe_modifier' p.pk %}">Modifier</a>{% endif %}
+      {% if admin %}<a class="bouton secondaire" href="{% url 'admin:pointages_personne_change' p.pk %}">Congés et admin</a>{% endif %}
+    </div>
+  </div>
+</div>
+
+{% if bilan %}
+<div class="chiffres">
+  <div class="chiffre"><div class="val">{{ bilan.jours }}</div><div class="lib">Jours travaillés ce mois</div></div>
+  <div class="chiffre"><div class="val">{{ bilan.heures_txt }}</div><div class="lib">Heures ce mois</div></div>
+  <div class="chiffre vert"><div class="val">{{ bilan.reel|floatformat:"2g" }} {{ APP.DEVISE }}</div><div class="lib">Salaire réel (théorique {{ bilan.theorique|floatformat:"2g" }})</div></div>
+  <div class="chiffre orange"><div class="val">{{ solde }} j</div><div class="lib">Solde de congé {{ annee }}</div></div>
+</div>
+{% endif %}
+
+<div class="grille grille-2">
+  <div class="carte">
+    <h2>Renseignements</h2>
+    <dl class="infos">
+      <dt>CIN</dt><dd>{{ p.cin|default:"—" }}</dd>
+      {% if p.num_nat %}<dt>N° national (eID)</dt><dd>{{ p.num_nat }}</dd>{% endif %}
+      <dt>CNSS</dt><dd>{{ p.cnss|default:"—" }}</dd>
+      <dt>Naissance</dt><dd>{{ p.date_naissance|date:"d/m/Y"|default:"—" }}{% if p.lieu_naissance %} à {{ p.lieu_naissance }}{% endif %}</dd>
+      <dt>Situation</dt><dd>{{ p.get_situation_familiale_display|default:"—" }}{% if p.enfants %}, {{ p.enfants }} enfant(s){% endif %}</dd>
+      <dt>Téléphone</dt><dd>{{ p.telephone|default:"—" }}</dd>
+      <dt>Adresse</dt><dd>{{ p.adresse }} {{ p.code_postal }} {{ p.localite }}</dd>
+      <dt>Contrat</dt><dd>{{ p.contrat|default:"—" }}{% if p.date_entree %}, depuis le {{ p.date_entree|date:"d/m/Y" }}{% endif %}{% if p.date_sortie %}, sorti le {{ p.date_sortie|date:"d/m/Y" }}{% endif %}</dd>
+      {% if admin %}<dt>Paie</dt><dd>{{ p.get_mode_paie_display }} · {{ p.taux|floatformat:"2g" }} {{ APP.DEVISE }}</dd>
+      <dt>Banque</dt><dd>{% if p.paiement_banque %}{{ p.banque }} · {{ p.rib }}{% else %}Espèces{% endif %}</dd>{% endif %}
+      {% if p.document %}<dt>Pièce d'identité</dt><dd><a href="{{ p.document.url }}" target="_blank" rel="noopener">Voir le document</a></dd>{% endif %}
+    </dl>
+  </div>
+  <div class="carte">
+    <div class="entete-page" style="margin-bottom:10px">
+      <h2 style="margin:0">Congés {{ annee }}</h2>
+      <form class="filtres" method="get"><select name="annee" data-auto>{% for a in annees %}<option {% if a == annee %}selected{% endif %}>{{ a }}</option>{% endfor %}</select><button class="bouton petit">OK</button></form>
+    </div>
+    <ul class="liste-simple">
+      {% for c in conges %}<li><span><span class="etat bleu">{{ c.get_type_display }}</span> du {{ c.debut|date:"d/m" }} au {{ c.fin|date:"d/m" }}</span><span>{{ c.jours_ouvres }} j décomptés / {{ c.jours_calendaires }} j</span></li>
+      {% empty %}<li class="vide">Aucun congé en {{ annee }}.</li>{% endfor %}
+    </ul>
+    <p class="sous-titre" style="margin-top:10px">Les jours de repos et les jours fériés ne sont pas décomptés.</p>
+  </div>
+</div>
+
+<div class="carte tableau-wrap">
+  <h2>Pointages {{ annee }}</h2>
+  <table>
+    <thead><tr><th>Date</th><th>Arrivée</th><th>Sortie</th><th>Durée</th><th>Service</th><th>Source</th></tr></thead>
+    <tbody>
+    {% for pt in pointages %}
+      <tr><td>{{ pt.checkin|date:"D d/m/Y" }}</td><td>{{ pt.checkin|time:"H:i" }}</td>
+        <td>{% if pt.checkout %}{{ pt.checkout|time:"H:i" }}{% else %}<span class="etat rouge">aucune</span>{% endif %}</td>
+        <td>{{ pt.duration|default:"—" }}</td><td>{{ pt.service|default:"" }}</td><td>{{ pt.get_source_display }}</td></tr>
+    {% empty %}<tr><td colspan="6" class="vide">Aucun pointage en {{ annee }}.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

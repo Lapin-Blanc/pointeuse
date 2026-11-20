@@ -2,11 +2,9 @@
 
 import os
 import django
-from datetime import timedelta
 from datetime import datetime
 from time import sleep
 
-from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 os.environ.setdefault("DJANGO_SETTINGS_MODULE","pointeuse.settings")
 django.setup()
@@ -16,6 +14,7 @@ gpio.setmode(gpio.BCM)
 from Adafruit_CharLCD import Adafruit_CharLCD as LCD
 
 from pointages.models import Personne, Pointage
+from pointages.services import ARRIVEE, SORTIE, pointer
 
 from pythonbeid.beid import BeidReader
 
@@ -81,28 +80,22 @@ class PointeuseReader(BeidReader):
             p.save()
             print("Personne créée :", p)
 
-        p_name = p.nom + " " + p.prenoms.split()[0]
-        p_message = datetime.now().strftime("%H:%M") 
-
-        if not p.pointage_set.filter(checkin__date = timezone.now().date()):
-            p.pointage_set.create(checkin=timezone.now())
-            print("Premier pointage de la journée")
-            p_message = p_message + " ARRIVEE"
-            
+        p_name = str(p)
+        if not p.actif:
+            lcd.clear()
+            lcd.message(p_name + "\nAcces refuse")
+            gpio.output(RED_LED, True)
+            return
+        resultat, _ = pointer(p, source="eid")
+        p_message = datetime.now().strftime("%H:%M")
+        if resultat == ARRIVEE:
+            print("Arrivée enregistrée")
+            p_message += " ARRIVEE"
+        elif resultat == SORTIE:
+            print("Sortie enregistrée")
+            p_message += " SORTIE"
         else:
-            try:
-                pointage_started = p.pointage_set.get(checkin__date = timezone.now().date() , checkout__exact = None)
-                if pointage_started.checkin >= timezone.now() - timedelta(minutes = MIN_DELAY):
-                    print("Durée de pointage trop courte")
-                else:
-                    pointage_started.checkout = timezone.now()
-                    pointage_started.save()
-                    print("Pointage clôturé")
-                    p_message = p_message + " SORTIE"
-            except ObjectDoesNotExist:
-                p.pointage_set.create(checkin=timezone.now())
-                print("Nouveau pointage pour la journée")
-                p_message = p_message + " ARRIVEE"
+            print("Durée de pointage trop courte")
         ############################
         lcd.clear()
         lcd.message(p_name + "\n" + p_message)

@@ -1,0 +1,72 @@
+{% extends "pointages/base.html" %}
+{% load static %}
+{% block titre %}Pointer{% endblock %}
+{% block contenu %}
+<div class="entete-page">
+  <div>
+    <h1>Pointage</h1>
+    <p class="sous-titre">{{ jour|date:"l j F Y" }}{% if ville or service %} · 📍 {{ ville|default:"" }}{% if ville and service %} — {% endif %}{{ service|default:"" }}{% endif %}</p>
+  </div>
+  <form class="filtres" method="post">{% csrf_token %}
+    <input type="hidden" name="choisir_lieu" value="1">
+    <div><label for="id_ville">Ville</label>{{ lieu.ville }}</div>
+    <div><label for="id_service">Service / chantier</label>{{ lieu.service }}</div>
+    <button class="bouton secondaire">Choisir le lieu</button>
+  </form>
+</div>
+
+<div class="scan-zone">
+  <div class="carte">
+    <h2>📷 Scanner un badge</h2>
+    <form id="form-scan" class="code-saisie" method="post" action="{% url 'scan' %}" autocomplete="off">{% csrf_token %}
+      <input id="code" name="code" placeholder="Scanner le QR code ou taper le matricule…" autofocus>
+      <button class="bouton">Pointer</button>
+    </form>
+    <p class="aide sous-titre" style="margin-top:8px">Un lecteur QR USB fonctionne directement dans ce champ.</p>
+    <div class="actions"><button type="button" class="bouton secondaire" id="camera">Utiliser la caméra</button></div>
+    <div id="lecteur" style="margin-top:12px"></div>
+    <p id="camera-info" class="sous-titre"></p>
+  </div>
+  <div class="carte">
+    <h2>Résultat</h2>
+    <div id="resultat" class="resultat" aria-live="polite">
+      <div class="grand">En attente d'un badge</div>
+      <div>L'arrivée ou la sortie est choisie automatiquement.</div>
+    </div>
+  </div>
+</div>
+
+<div class="grille grille-2">
+  <div class="carte">
+    <h2>✍️ Saisie manuelle</h2>
+    <form method="post" novalidate>{% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="form-grille">
+        {% for f in form %}
+        <div class="champ"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}</div>
+        {% endfor %}
+      </div>
+      {% if not est_admin %}<p class="sous-titre" style="margin-top:10px">En tant que pointeur, vous ne pouvez pointer que la journée d'aujourd'hui.</p>{% endif %}
+      <div class="actions" style="margin-top:12px"><button class="bouton">Enregistrer</button></div>
+    </form>
+  </div>
+  <div class="carte tableau-wrap">
+    <h2>Pointages du jour ({{ du_jour|length }})</h2>
+    <table>
+      <thead><tr><th>Employé</th><th>Arrivée</th><th>Sortie</th><th>Durée</th><th></th></tr></thead>
+      <tbody id="liste-jour">
+      {% for p in du_jour %}
+        <tr><td>{{ p.personne }}</td><td>{{ p.checkin|time:"H:i" }}</td>
+          <td>{% if p.checkout %}{{ p.checkout|time:"H:i" }}{% else %}<span class="etat vert">présent</span>{% endif %}</td>
+          <td>{{ p.duration|default:"—" }}</td>
+          <td><a class="bouton petit secondaire" href="{% url 'pointage_modifier' p.pk %}?suite={% url 'pointage' %}">Modifier</a></td></tr>
+      {% empty %}<tr><td colspan="5" class="vide">Aucun pointage aujourd'hui.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'pointages/vendor/html5-qrcode.min.js' %}"></script>
+<script src="{% static 'pointages/scan.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "pointages/base.html" %}
+{% block titre %}Vision RH{% endblock %}
+{% block contenu %}
+<div class="entete-page">
+  <div>
+    <h1>Vision RH</h1>
+    <p class="sous-titre">Aujourd'hui, {{ aujourd_hui|date:"l j F Y" }}</p>
+  </div>
+  <form class="filtres" method="get">
+    <div><label for="mois">Mois analysé</label><input type="month" id="mois" name="mois" value="{{ mois }}"></div>
+    <button class="bouton">Afficher</button>
+  </form>
+</div>
+
+<h2>Aujourd'hui</h2>
+<div class="chiffres">
+  <div class="chiffre"><div class="val">{{ nb_actifs }}</div><div class="lib">Employés actifs</div></div>
+  <div class="chiffre vert"><div class="val">{{ presents|length }}</div><div class="lib">Présents maintenant</div></div>
+  <div class="chiffre"><div class="val">{{ nb_pointes }}</div><div class="lib">Ont pointé aujourd'hui</div></div>
+  <div class="chiffre rouge"><div class="val">{{ absents|length }}</div><div class="lib">Absents</div></div>
+  <div class="chiffre orange"><div class="val">{{ retards_jour|length }}</div><div class="lib">En retard</div></div>
+  <div class="chiffre"><div class="val">{{ en_conge|length }}</div><div class="lib">En congé</div></div>
+</div>
+
+<div class="grille grille-3">
+  <div class="carte">
+    <h2>🟢 Présents (sans sortie)</h2>
+    <ul class="liste-simple">
+      {% for p in presents %}
+      <li><a href="{% url 'employe_fiche' p.personne.pk %}">{{ p.personne }}</a><span>depuis {{ p.checkin|time:"H:i" }}{% if p.service %} · {{ p.service }}{% endif %}</span></li>
+      {% empty %}<li class="vide">Personne n'est présent pour le moment.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="carte">
+    <h2>🔴 Absents</h2>
+    <ul class="liste-simple">
+      {% for p in absents|slice:":15" %}
+      <li><a href="{% url 'employe_fiche' p.pk %}">{{ p }}</a><span class="etat gris">{{ p.service|default:"—" }}</span></li>
+      {% empty %}<li class="vide">Aucun absent.</li>{% endfor %}
+      {% if absents|length > 15 %}<li class="vide">… et {{ absents|length|add:"-15" }} autres</li>{% endif %}
+    </ul>
+  </div>
+  <div class="carte">
+    <h2>⏰ Retards du jour</h2>
+    <ul class="liste-simple">
+      {% for r in retards_jour %}
+      <li><a href="{% url 'employe_fiche' r.personne.pk %}">{{ r.personne }}</a><span>{{ r.arrivee|time:"H:i" }} <span class="etat orange">+{{ r.minutes }} min</span></span></li>
+      {% empty %}<li class="vide">Aucun retard aujourd'hui.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="carte">
+    <h2>⚠️ Sorties oubliées</h2>
+    <ul class="liste-simple">
+      {% for p in sorties_oubliees %}
+      <li><a href="{% url 'pointage_modifier' p.pk %}">{{ p.personne }}</a><span>arrivé le {{ p.checkin|date:"d/m H:i" }} <span class="etat rouge">pas de sortie</span></span></li>
+      {% empty %}<li class="vide">Aucune sortie oubliée.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="carte">
+    <h2>🏖️ En congé aujourd'hui</h2>
+    <ul class="liste-simple">
+      {% for c in en_conge %}
+      <li><a href="{% url 'employe_fiche' c.personne.pk %}">{{ c.personne }}</a><span><span class="etat bleu">{{ c.get_type_display }}</span> jusqu'au {{ c.fin|date:"d/m" }}</span></li>
+      {% empty %}<li class="vide">Personne n'est en congé.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="carte">
+    <h2>📅 Congés à venir (30 jours)</h2>
+    <ul class="liste-simple">
+      {% for c in conges_a_venir %}
+      <li><a href="{% url 'employe_fiche' c.personne.pk %}">{{ c.personne }}</a><span>du {{ c.debut|date:"d/m" }} au {{ c.fin|date:"d/m" }} · {{ c.jours_ouvres }} j</span></li>
+      {% empty %}<li class="vide">Aucun congé prévu.</li>{% endfor %}
+    </ul>
+  </div>
+</div>
+
+<h2>Le mois {{ mois }}</h2>
+<div class="chiffres">
+  <div class="chiffre">
+    <div class="val">{{ heures_mois }}</div><div class="lib">Heures travaillées</div>
+    <div class="var">{% if var_heures is not None %}<span class="{% if var_heures >= 0 %}hausse{% else %}baisse{% endif %}">{% if var_heures >= 0 %}▲ +{% else %}▼ {% endif %}{{ var_heures }} %</span> vs mois précédent ({{ heures_prec }}){% else %}Pas de données le mois précédent{% endif %}</div>
+  </div>
+  <div class="chiffre vert">
+    <div class="val">{{ cout_reel|floatformat:"0g" }} {{ APP.DEVISE }}</div><div class="lib">Masse salariale réelle</div>
+    <div class="var">{% if var_cout is not None %}<span class="{% if var_cout >= 0 %}hausse{% else %}baisse{% endif %}">{% if var_cout >= 0 %}▲ +{% else %}▼ {% endif %}{{ var_cout }} %</span> vs mois précédent{% endif %}</div>
+  </div>
+  <div class="chiffre"><div class="val">{{ cout_theorique|floatformat:"0g" }} {{ APP.DEVISE }}</div><div class="lib">Masse salariale théorique</div></div>
+  <div class="chiffre orange">
+    <div class="val">{% if ponctualite is not None %}{{ ponctualite }} %{% else %}—{% endif %}</div><div class="lib">Ponctualité</div>
+    <div class="var">{{ a_l_heure }} à l'heure · {{ en_retard }} en retard</div>
+  </div>
+</div>
+
+<div class="carte">
+  <h2>Heures par jour</h2>
+  <div class="histo">{% for j in histo %}<div style="height: {{ j.pct }}%" title="{{ j.jour }} : {{ j.heures }}"></div>{% endfor %}</div>
+  <div class="histo-axe">{% for j in histo %}<span>{% if j.jour == 1 or j.jour|divisibleby:5 %}{{ j.jour }}{% endif %}</span>{% endfor %}</div>
+</div>
+
+<div class="grille grille-2">
+  <div class="carte">
+    <h2>Heures par ville</h2>
+    <div class="barres">
+      {% for b in par_ville %}<div class="barre-ligne"><span>{{ b.nom }}</span><div class="barre-fond"><div class="barre-plein" style="width: {{ b.pct }}%"></div></div><span class="num">{{ b.heures }}</span></div>
+      {% empty %}<p class="vide">Pas de pointage ce mois.</p>{% endfor %}
+    </div>
+  </div>
+  <div class="carte">
+    <h2>Heures par service / chantier</h2>
+    <div class="barres">
+      {% for b in par_service %}<div class="barre-ligne"><span>{{ b.nom }}</span><div class="barre-fond"><div class="barre-plein" style="width: {{ b.pct }}%"></div></div><span class="num">{{ b.heures }}</span></div>
+      {% empty %}<p class="vide">Pas de pointage ce mois.</p>{% endfor %}
+    </div>
+  </div>
+  <div class="carte">
+    <h2>🏆 Le plus d'heures</h2>
+    <ol class="liste-simple">{% for p, h in top %}<li><a href="{% url 'employe_fiche' p.pk %}">{{ forloop.counter }}. {{ p }}</a><strong>{{ h }}</strong></li>{% empty %}<li class="vide">—</li>{% endfor %}</ol>
+  </div>
+  <div class="carte">
+    <h2>📉 Le moins d'heures</h2>
+    <ol class="liste-simple">{% for p, h in flop %}<li><a href="{% url 'employe_fiche' p.pk %}">{{ forloop.counter }}. {{ p }}</a><strong>{{ h }}</strong></li>{% empty %}<li class="vide">—</li>{% endfor %}</ol>
+  </div>
+</div>
+{% endblock %}

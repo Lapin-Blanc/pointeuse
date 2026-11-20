@@ -1,0 +1,27 @@
+{% extends "pointages/base.html" %}
+{% block titre %}Badge {{ p }}{% endblock %}
+{% block contenu %}
+<div class="no-print">
+  <h1>Badge de {{ p }}</h1>
+  <p class="sous-titre">Imprimez-le au format carte bancaire, ou envoyez l'image PNG à l'employé pour qu'il pointe avec son téléphone.</p>
+  <div class="actions">
+    <button class="bouton" data-imprimer type="button">🖨 Imprimer le badge</button>
+    <a class="bouton secondaire" href="{% url 'badge_png' p.pk %}">⬇ Télécharger le QR code (PNG)</a>
+    <a class="bouton secondaire" href="{% url 'employe_fiche' p.pk %}">Retour à la fiche</a>
+  </div>
+</div>
+<div class="badge-carte">
+  <div class="badge-gauche">
+    <div class="badge-app">{{ APP.NOM|upper }}</div>
+    {% if p.photo %}<img class="avatar" src="{{ p.photo.url }}" alt="">{% else %}<span class="avatar">{{ p.nom|first }}{{ p.prenoms|first }}</span>{% endif %}
+    <div class="badge-app">{{ p.matricule }}</div>
+  </div>
+  <div class="badge-droite">
+    <div class="badge-nom">{{ p.nom|upper }}<br>{{ p.prenoms }}</div>
+    <img src="{{ qr }}" alt="QR code de pointage">
+    <div class="badge-info">{{ p.poste|default:"" }}{% if p.service %} · {{ p.service }}{% endif %}</div>
+  </div>
+</div>
+<p class="sous-titre no-print">Badge perdu ? L'administrateur peut en générer un nouveau (Paramètres → Employés → action « Générer un nouveau badge ») : l'ancien ne fonctionnera plus.</p>
+{% endblock %}
+{% block scripts %}{% load static %}<script src="{% static 'pointages/imprimer.js' %}"></script>{% endblock %}

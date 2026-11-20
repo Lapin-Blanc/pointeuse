@@ -1,0 +1,35 @@
+{% extends "pointages/base.html" %}
+{% block titre %}Employés{% endblock %}
+{% block contenu %}
+<div class="entete-page">
+  <div><h1>Employés</h1><p class="sous-titre">{{ page.paginator.count }} fiche(s)</p></div>
+  <a class="bouton" href="{% url 'employe_nouveau' %}">+ Nouvel employé</a>
+</div>
+<div class="carte">
+  <form class="filtres" method="get">
+    <div><label for="q">Recherche</label><input id="q" name="q" value="{{ q }}" placeholder="Nom, matricule ou CIN" autofocus></div>
+    <div><label for="statut">Statut</label>
+      <select id="statut" name="statut">
+        <option value="actifs" {% if statut == "actifs" %}selected{% endif %}>Actifs</option>
+        <option value="inactifs" {% if statut == "inactifs" %}selected{% endif %}>Partis</option>
+        <option value="tous" {% if statut == "tous" %}selected{% endif %}>Tous</option>
+      </select></div>
+    <button class="bouton">Chercher</button>
+  </form>
+</div>
+<div class="carte tableau-wrap">
+  <table>
+    <thead><tr><th>Employé</th><th>Matricule</th><th>Poste</th><th>Service</th><th>Ville</th><th>Téléphone</th><th></th></tr></thead>
+    <tbody>
+    {% for p in page %}
+      <tr>
+        <td><a class="nom-cell" href="{% url 'employe_fiche' p.pk %}">{% if p.photo %}<img class="avatar petit" src="{{ p.photo.url }}" alt="">{% else %}<span class="avatar petit">{{ p.nom|first }}{{ p.prenoms|first }}</span>{% endif %}{{ p.nom }} {{ p.prenoms }}</a></td>
+        <td>{{ p.matricule }}</td><td>{{ p.poste }}</td><td>{{ p.service|default:"" }}</td><td>{{ p.ville|default:"" }}</td><td>{{ p.telephone }}</td>
+        <td class="actions"><a class="bouton petit secondaire" href="{% url 'badge' p.pk %}">Badge</a>{% if not p.actif %} <span class="etat gris">parti</span>{% endif %}</td>
+      </tr>
+    {% empty %}<tr><td colspan="7" class="vide">Aucun employé.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% with params="q="|add:q|add:"&statut="|add:statut %}{% include "pointages/_pagination.html" %}{% endwith %}
+</div>
+{% endblock %}

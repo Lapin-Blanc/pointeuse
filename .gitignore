@@ -1,3 +1,7 @@
+secret_key.txt
+media/
+staticfiles/
+venv/
 pythonbeid/*
 pointages/migrations/*
 db.sqlite3

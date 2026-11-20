@@ -1,0 +1,14 @@
+[Unit]
+Description=Pointage Max - borne carte eID (lecteur, LCD, LED)
+After=network.target pcscd.service
+
+[Service]
+User=@UTILISATEUR@
+WorkingDirectory=@DOSSIER@
+Environment=POINTAGE_TZ=Africa/Casablanca
+ExecStart=@DOSSIER@/venv/bin/python pointeuse.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

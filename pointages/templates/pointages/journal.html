@@ -1,0 +1,25 @@
+{% extends "pointages/base.html" %}
+{% block titre %}Journal{% endblock %}
+{% block contenu %}
+<h1>Journal des actions</h1>
+<p class="sous-titre">Qui a créé, modifié ou supprimé quoi, et quand.</p>
+<div class="carte">
+  <form class="filtres" method="get">
+    <div><label for="q">Recherche</label><input id="q" name="q" value="{{ q }}" placeholder="Employé, utilisateur, type…"></div>
+    <button class="bouton">Chercher</button>
+  </form>
+</div>
+<div class="carte tableau-wrap">
+  <table>
+    <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Objet</th><th>Détails</th></tr></thead>
+    <tbody>
+    {% for j in page %}
+      <tr><td>{{ j.date|date:"d/m/Y H:i:s" }}</td><td>{{ j.utilisateur|default:"borne / système" }}</td>
+        <td><span class="etat {% if j.action == 'Création' %}vert{% elif j.action == 'Suppression' %}rouge{% else %}orange{% endif %}">{{ j.action }}</span></td>
+        <td>{{ j.objet }} #{{ j.objet_id }}</td><td>{{ j.details }}</td></tr>
+    {% empty %}<tr><td colspan="5" class="vide">Le journal est vide.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% with params="q="|add:q %}{% include "pointages/_pagination.html" %}{% endwith %}
+</div>
+{% endblock %}

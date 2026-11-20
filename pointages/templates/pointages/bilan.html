@@ -1,0 +1,70 @@
+{% extends "pointages/base.html" %}
+{% block titre %}Bilan mensuel{% endblock %}
+{% block contenu %}
+<div class="entete-page">
+  <div>
+    <h1>Bilan mensuel</h1>
+    <p class="sous-titre">Du {{ b.debut|date:"d/m/Y" }} au {{ b.fin|date:"d/m/Y" }} · {{ b.jours_ouvres }} jours ouvrés · base {{ APP.HEURES_MENSUELLES|floatformat:"-2" }} h/mois</p>
+  </div>
+  <div class="actions no-print">
+    <a class="bouton secondaire" href="?{{ query }}&format=xlsx">⬇ Excel</a>
+    <a class="bouton secondaire" href="?{{ query }}&format=csv">⬇ CSV</a>
+    <button class="bouton" id="imprimer" type="button">🖨 Imprimer</button>
+  </div>
+</div>
+
+<div class="carte no-print">
+  <form class="filtres" method="get">
+    <div><label for="mois">Mois</label><input type="month" id="mois" name="mois" value="{{ mois }}"></div>
+    <div><label for="id_ville">Ville</label>{{ form.ville }}</div>
+    <div><label for="id_service">Service / chantier</label>{{ form.service }}</div>
+    <button class="bouton">Calculer</button>
+  </form>
+</div>
+
+<div class="chiffres">
+  <div class="chiffre"><div class="val">{{ b.lignes|length }}</div><div class="lib">Employés</div></div>
+  <div class="chiffre"><div class="val">{{ b.total.heures_txt }}</div><div class="lib">Heures travaillées</div></div>
+  <div class="chiffre"><div class="val">{{ b.total.theorique|floatformat:"2g" }} {{ APP.DEVISE }}</div><div class="lib">Total théorique</div></div>
+  <div class="chiffre vert"><div class="val">{{ b.total.reel|floatformat:"2g" }} {{ APP.DEVISE }}</div><div class="lib">Total réel à payer</div></div>
+</div>
+
+<div class="carte tableau-wrap">
+  <table>
+    <thead><tr>
+      <th>Matricule</th><th>Employé</th><th>Service</th><th>Paie</th><th class="num">Taux</th>
+      <th class="num">Jours</th><th class="num">Heures</th><th class="num">Congés</th><th class="num">Absences</th>
+      <th class="num">Théorique</th><th class="num">Réel</th>
+    </tr></thead>
+    <tbody>
+    {% for l in b.lignes %}
+      <tr>
+        <td>{{ l.personne.matricule }}</td>
+        <td><a href="{% url 'employe_fiche' l.personne.pk %}?mois={{ mois }}">{{ l.personne.nom }} {{ l.personne.prenoms }}</a>
+          {% if l.ouverts %}<span class="etat rouge" title="Pointages sans sortie, non comptés">{{ l.ouverts }} sans sortie</span>{% endif %}</td>
+        <td>{{ l.personne.service|default:"—" }}</td>
+        <td>{{ l.personne.get_mode_paie_display }}</td>
+        <td class="num">{{ l.personne.taux|floatformat:"2g" }}</td>
+        <td class="num">{{ l.jours }}</td>
+        <td class="num">{{ l.heures_txt }}</td>
+        <td class="num">{{ l.conges }}</td>
+        <td class="num">{% if l.absences %}<span class="etat orange">{{ l.absences }}</span>{% else %}0{% endif %}</td>
+        <td class="num">{{ l.theorique|floatformat:"2g" }}</td>
+        <td class="num"><strong>{{ l.reel|floatformat:"2g" }}</strong></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="11" class="vide">Aucun employé pour ces critères.</td></tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr>
+      <td colspan="5">Total ({{ APP.DEVISE }})</td><td class="num">{{ b.total.jours }}</td><td class="num">{{ b.total.heures_txt }}</td>
+      <td></td><td></td><td class="num">{{ b.total.theorique|floatformat:"2g" }}</td><td class="num">{{ b.total.reel|floatformat:"2g" }}</td>
+    </tr></tfoot>
+  </table>
+</div>
+<p class="sous-titre">
+  <strong>Calcul du salaire réel :</strong> mensuel = salaire × heures (congés payés compris) ÷ {{ APP.HEURES_MENSUELLES|floatformat:"-2" }} h, plafonné au salaire ·
+  journalier = taux × jours travaillés · horaire = taux × heures. Les pointages sans sortie ne sont pas comptés.
+</p>
+{% endblock %}
+{% block scripts %}{% load static %}<script src="{% static 'pointages/imprimer.js' %}"></script>{% endblock %}
