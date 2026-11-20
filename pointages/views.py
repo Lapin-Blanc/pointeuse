@@ -355,7 +355,7 @@ def employe_fiche(request, pk):
     a, m = _mois_demande(request)
     return render(request, "pointages/employe_fiche.html", {
         "p": personne, "pointages": pointages, "conges": conges, "annee": annee, "annees": annees,
-        "solde": personne.solde_conge(annee), "admin": est_admin(request.user),
+        "solde": personne.solde_conge(), "admin": est_admin(request.user),
         "modifiable": _peut_modifier_employe(request.user, personne),
         "bilan": stats.bilan_mensuel(a, m, personne=personne)["lignes"][0] if est_admin(request.user) else None,
     })
@@ -389,3 +389,43 @@ def media_protege(request, path):
     """Photos et pièces d'identité : réservées aux utilisateurs connectés."""
     from django.views.static import serve
     return serve(request, path, document_root=settings.MEDIA_ROOT)
+
+
+# ---------------------------------------------------------------------------
+# Import Excel / CSV
+# ---------------------------------------------------------------------------
+
+@admin_requis
+def importer(request):
+    from . import importation
+
+    rapport = type_import = None
+    if request.method == "POST":
+        type_import = request.POST.get("type")
+        fichier = request.FILES.get("fichier")
+        simuler = request.POST.get("action") == "verifier"
+        if type_import not in ("employes", "pointages") or not fichier:
+            messages.error(request, "Choisissez un type d'import et un fichier.")
+        elif not fichier.name.lower().endswith((".xlsx", ".xlsm", ".csv", ".txt")):
+            messages.error(request, "Format non pris en charge : utilisez un fichier Excel (.xlsx) ou CSV.")
+        else:
+            try:
+                lignes = importation.lire_fichier(fichier)
+                fonction = importation.importer_employes if type_import == "employes" else importation.importer_pointages
+                rapport = fonction(lignes, user=request.user, simuler=simuler)
+                rapport["simulation"] = simuler
+            except Exception as e:  # noqa: BLE001 — fichier illisible
+                messages.error(request, "Impossible de lire le fichier : %s" % e)
+    return render(request, "pointages/importer.html", {"rapport": rapport, "type_import": type_import})
+
+
+@admin_requis
+def importer_modele(request, type_import):
+    from . import importation
+
+    if type_import not in ("employes", "pointages"):
+        raise PermissionDenied
+    r = HttpResponse(importation.modele(type_import),
+                     content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    r["Content-Disposition"] = 'attachment; filename="modele-%s.xlsx"' % type_import
+    return r

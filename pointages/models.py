@@ -157,16 +157,20 @@ class Personne(models.Model):
             self.code_badge = _nouveau_code_badge()
         super().save(*args, **kwargs)
         if not self.matricule:
-            Personne.objects.filter(pk=self.pk).update(matricule="EMP%04d" % self.pk)
-            self.matricule = "EMP%04d" % self.pk
+            matricule, n = "EMP%04d" % self.pk, 1
+            while Personne.objects.filter(matricule__iexact=matricule).exclude(pk=self.pk).exists():
+                n += 1  # matricule déjà pris (par exemple importé d'un fichier)
+                matricule = "EMP%04d-%d" % (self.pk, n)
+            Personne.objects.filter(pk=self.pk).update(matricule=matricule)
+            self.matricule = matricule
 
     def modifiable_par_pointeur(self):
         return timezone.now() - self.cree_le < timedelta(hours=24)
 
-    def solde_conge(self, annee=None):
-        annee = annee or timezone.localdate().year
-        pris = sum(c.jours_ouvres() for c in self.conge_set.filter(type="annuel", debut__year=annee))
-        return settings.POINTAGE_MAX["CONGE_ANNUEL_JOURS"] - pris
+    def solde_conge(self):
+        """Jours de congé annuel encore disponibles (reliquats non expirés compris, FIFO)."""
+        from .conges import disponible
+        return disponible(self)
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,59 @@
+{% extends "pointages/base.html" %}
+{% block titre %}Importer{% endblock %}
+{% block contenu %}
+<h1>Importer vos données</h1>
+<p class="sous-titre">Chargez vos employés et votre historique de pointages depuis Excel (.xlsx) ou CSV.
+  Les colonnes sont reconnues par leur titre ; l'ordre n'a pas d'importance.</p>
+
+<div class="grille grille-2">
+  <div class="carte">
+    <h2>1. Employés</h2>
+    <p>Colonnes reconnues : <strong>Nom</strong> (obligatoire), Prénom, Matricule, CIN, CNSS, Sexe, Date de naissance,
+      Téléphone, Email, Adresse, Poste, Service (ou Chantier), Ville, Contrat, Date d'entrée, Mode de paie
+      (Mensuel / Journalier / Horaire), Salaire, Banque, RIB.</p>
+    <p class="sous-titre">Un employé déjà présent (même matricule ou même CIN) est mis à jour au lieu d'être créé en double.
+      Les villes, services et contrats inconnus sont créés automatiquement. Sans matricule, il est attribué automatiquement.</p>
+    <a class="bouton secondaire" href="{% url 'importer_modele' 'employes' %}">⬇ Modèle Excel employés</a>
+  </div>
+  <div class="carte">
+    <h2>2. Pointages</h2>
+    <p>Colonnes : <strong>Matricule</strong> (ou CIN), <strong>Date</strong>, <strong>Arrivée</strong>, Sortie.
+      Une ligne par passage. Dates au format JJ/MM/AAAA, heures au format HH:MM.</p>
+    <p class="sous-titre">Importez d'abord les employés. Un pointage déjà présent (même employé, même heure d'arrivée) est ignoré :
+      vous pouvez réimporter le même fichier sans créer de doublons.</p>
+    <a class="bouton secondaire" href="{% url 'importer_modele' 'pointages' %}">⬇ Modèle Excel pointages</a>
+  </div>
+</div>
+
+<div class="carte">
+  <h2>Charger un fichier</h2>
+  <form method="post" enctype="multipart/form-data" class="filtres">{% csrf_token %}
+    <div><label for="type">Type de données</label>
+      <select id="type" name="type">
+        <option value="employes" {% if type_import != "pointages" %}selected{% endif %}>Employés</option>
+        <option value="pointages" {% if type_import == "pointages" %}selected{% endif %}>Pointages</option>
+      </select></div>
+    <div><label for="fichier">Fichier Excel ou CSV</label><input type="file" id="fichier" name="fichier" accept=".xlsx,.xlsm,.csv,.txt" required></div>
+    <button class="bouton secondaire" name="action" value="verifier">🔍 Vérifier sans enregistrer</button>
+    <button class="bouton" name="action" value="importer">⬆ Importer</button>
+  </form>
+</div>
+
+{% if rapport %}
+<div class="carte">
+  <h2>{% if rapport.simulation %}Vérification (rien n'a été enregistré){% else %}Import terminé{% endif %}</h2>
+  <div class="chiffres">
+    <div class="chiffre vert"><div class="val">{{ rapport.crees }}</div><div class="lib">{% if rapport.simulation %}à créer{% else %}créé(s){% endif %}</div></div>
+    {% if type_import == "employes" %}<div class="chiffre"><div class="val">{{ rapport.maj }}</div><div class="lib">{% if rapport.simulation %}à mettre à jour{% else %}mis à jour{% endif %}</div></div>{% endif %}
+    {% if type_import == "pointages" %}<div class="chiffre"><div class="val">{{ rapport.ignores }}</div><div class="lib">déjà présents (ignorés)</div></div>{% endif %}
+    <div class="chiffre {% if rapport.erreurs %}rouge{% endif %}"><div class="val">{{ rapport.erreurs|length }}</div><div class="lib">ligne(s) en erreur</div></div>
+  </div>
+  <p class="sous-titre">Colonnes reconnues : {{ rapport.colonnes|join:", " }}</p>
+  {% if rapport.erreurs %}
+  <ul class="liste-simple">{% for e in rapport.erreurs|slice:":100" %}<li class="errorlist">{{ e }}</li>{% endfor %}</ul>
+  {% if rapport.erreurs|length > 100 %}<p class="vide">… et {{ rapport.erreurs|length|add:"-100" }} autres erreurs.</p>{% endif %}
+  {% endif %}
+  {% if rapport.simulation and rapport.crees or rapport.simulation and rapport.maj %}<p>Tout est bon ? Choisissez à nouveau le fichier et cliquez sur <strong>Importer</strong>.</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -21,6 +21,7 @@
     {% if est_admin %}
     <a href="{% url 'bilan' %}" class="{% if request.resolver_match.url_name == 'bilan' %}actif{% endif %}">Bilan mensuel</a>
     <a href="{% url 'admin:pointages_conge_changelist' %}">Congés</a>
+    <a href="{% url 'importer' %}" class="{% if request.resolver_match.url_name == 'importer' %}actif{% endif %}">Importer</a>
     <a href="{% url 'journal' %}" class="{% if request.resolver_match.url_name == 'journal' %}actif{% endif %}">Journal</a>
     <a href="{% url 'admin:index' %}">Paramètres</a>
     {% endif %}

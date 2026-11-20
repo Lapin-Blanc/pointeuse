@@ -24,7 +24,7 @@
   <div class="chiffre"><div class="val">{{ bilan.jours }}</div><div class="lib">Jours travaillés ce mois</div></div>
   <div class="chiffre"><div class="val">{{ bilan.heures_txt }}</div><div class="lib">Heures ce mois</div></div>
   <div class="chiffre vert"><div class="val">{{ bilan.reel|floatformat:"2g" }} {{ APP.DEVISE }}</div><div class="lib">Salaire réel (théorique {{ bilan.theorique|floatformat:"2g" }})</div></div>
-  <div class="chiffre orange"><div class="val">{{ solde }} j</div><div class="lib">Solde de congé {{ annee }}</div></div>
+  <div class="chiffre orange"><div class="val">{{ solde }} j</div><div class="lib">Congé annuel disponible</div></div>
 </div>
 {% endif %}
 

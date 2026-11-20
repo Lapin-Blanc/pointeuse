@@ -52,6 +52,7 @@ POINTAGE_MAX = {
     "HEURES_PAR_JOUR": float(os.environ.get("POINTAGE_HEURES_PAR_JOUR", "8")),
     "JOURS_REPOS": [int(j) for j in os.environ.get("POINTAGE_JOURS_REPOS", "6").split(",") if j != ""],  # 0=lundi … 6=dimanche
     "CONGE_ANNUEL_JOURS": int(os.environ.get("POINTAGE_CONGE_ANNUEL", "18")),  # 1,5 jour par mois
+    "CONGE_REPORT_ANNEES": int(os.environ.get("POINTAGE_CONGE_REPORT", "2")),  # reliquat utilisable 2 ans de plus
     "HEURE_DEBUT": os.environ.get("POINTAGE_HEURE_DEBUT", "08:00"),
     "TOLERANCE_RETARD_MINUTES": int(os.environ.get("POINTAGE_TOLERANCE_RETARD", "10")),
     "DELAI_MIN_MINUTES": 1,  # délai minimum entre une arrivée et une sortie

@@ -17,6 +17,7 @@ avec lecteur de carte d'identité électronique (eID), écran LCD et LED.
 | **Badge** | Admin, pointeur | Badge format carte bancaire à imprimer, ou QR code PNG à envoyer sur le téléphone de l'employé |
 | **Bilan mensuel** | Admin | Jours, heures, congés, absences, salaire théorique et réel par employé ; filtres ville/service ; export Excel, CSV et impression |
 | **Congés** | Admin | Congé annuel, maladie, maternité… Les jours de repos et les jours fériés ne sont pas décomptés ; solde annuel |
+| **Importer** | Admin | Import des employés et de l'historique des pointages depuis Excel ou CSV, avec modèles et vérification avant import |
 | **Journal** | Admin | Qui a créé, modifié ou supprimé quoi, et quand |
 | **Paramètres** | Admin | Villes, services/chantiers (avec heure de début), types de contrat, jours fériés, utilisateurs |
 
@@ -26,6 +27,20 @@ avec lecteur de carte d'identité électronique (eID), écran LCD et LED.
   Exemple : 8 623 DH, 43 h 31 travaillées → 1 965 DH.
 - **Journalier** : taux × jours travaillés (+ congés payés).
 - **Horaire** : taux × heures (+ congés payés).
+
+## Tester sur votre ordinateur (Windows, Mac, Linux)
+
+1. Installez **Python 3** depuis https://www.python.org/downloads/ (sous Windows, cochez **« Add python.exe to PATH »**).
+2. Décompressez le dossier, puis double-cliquez sur :
+   - **Windows** : `demarrer-windows.bat`
+   - **Mac** : `demarrer-mac.command` (la première fois : clic droit → Ouvrir)
+   - **Linux** : `demarrer.sh`
+3. Le navigateur s'ouvre sur http://127.0.0.1:8000/. Connectez-vous avec **admin / admin123**,
+   puis changez ce mot de passe (clic sur votre nom en haut à droite).
+4. Menu **Importer** : téléchargez le modèle Excel, remplissez-le avec vos employés, puis vos pointages, et importez-les.
+   Le bouton « Vérifier sans enregistrer » signale les lignes en erreur avant l'import.
+
+Les données restent sur votre ordinateur (fichier `db.sqlite3` et dossier `media/`).
 
 ## Installation (Raspberry Pi OS, Debian, Ubuntu)
 
@@ -68,7 +83,8 @@ Dans `/etc/systemd/system/pointage-web.service` (puis `sudo systemctl restart po
 | `POINTAGE_HEURES_MENSUELLES` | `191` | Base horaire du mois (44 h/semaine) |
 | `POINTAGE_HEURES_PAR_JOUR` | `8` | Heures comptées pour un jour de congé payé |
 | `POINTAGE_JOURS_REPOS` | `6` | Jours non travaillés (0 = lundi … 6 = dimanche), ex. `5,6` |
-| `POINTAGE_CONGE_ANNUEL` | `18` | Jours de congé annuel |
+| `POINTAGE_CONGE_ANNUEL` | `18` | Jours de congé annuel (acquis au prorata des mois travaillés) |
+| `POINTAGE_CONGE_REPORT` | `2` | Années pendant lesquelles un reliquat de congé reste utilisable (décompte FIFO) |
 | `POINTAGE_HEURE_DEBUT` | `08:00` | Heure de début si le service n'en a pas |
 | `POINTAGE_TOLERANCE_RETARD` | `10` | Minutes de tolérance avant un retard |
 | `POINTAGE_HTTPS` | `0` | `1` si le site est servi en HTTPS |

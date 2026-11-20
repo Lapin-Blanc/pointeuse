@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time as time_obj, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
@@ -172,3 +172,80 @@ class VuesTests(Base):
     def test_entetes_securite(self):
         r = self.client.get(reverse("login"))
         self.assertIn("default-src 'self'", r["Content-Security-Policy"])
+
+
+class ImportTests(Base):
+    def _fichier(self, nom, contenu):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return SimpleUploadedFile(nom, contenu)
+
+    def test_import_employes_csv_puis_pointages_excel(self):
+        from openpyxl import Workbook
+        import io
+        self.client.force_login(self.admin)
+        csv_txt = ("Matricule;Nom;Prénom;CIN;Service;Ville;Contrat;Date d'entrée;Mode de paie;Salaire\n"
+                   "A100;Tazi;Amine;BK1;Atelier;Tanger;CDI;01/02/2024;Journalier;250,50\n"
+                   ";Sans;Matricule;BK2;;;;;;\n"
+                   "A101;Erreur;Date;BK3;;;;32/13/2024;;\n").encode("cp1252")
+        r = self.client.post(reverse("importer"), {"type": "employes", "action": "verifier",
+                                                   "fichier": self._fichier("e.csv", csv_txt)})
+        self.assertEqual(r.context["rapport"]["crees"], 2)
+        self.assertFalse(Personne.objects.filter(nom="Tazi").exists())  # simulation : rien enregistré
+        r = self.client.post(reverse("importer"), {"type": "employes", "action": "importer",
+                                                   "fichier": self._fichier("e.csv", csv_txt)})
+        rap = r.context["rapport"]
+        self.assertEqual((rap["crees"], len(rap["erreurs"])), (2, 1))
+        t = Personne.objects.get(matricule="A100")
+        self.assertEqual((t.mode_paie, t.taux, t.service.nom, t.ville.nom), ("J", Decimal("250.50"), "Atelier", "Tanger"))
+        self.assertTrue(Personne.objects.get(nom="Sans").matricule.startswith("EMP"))
+        # Réimport : mise à jour, pas de doublon
+        r = self.client.post(reverse("importer"), {"type": "employes", "action": "importer",
+                                                   "fichier": self._fichier("e.csv", csv_txt)})
+        self.assertEqual(r.context["rapport"]["maj"], 2)
+        self.assertEqual(Personne.objects.filter(nom="Tazi").count(), 1)
+
+        wb = Workbook()
+        ws = wb.active
+        ws.append(["Matricule", "Date", "Arrivée", "Sortie"])
+        ws.append(["A100", datetime(2026, 3, 2), "08:00", "16h30"])
+        ws.append(["BK2", "03/03/2026", time_obj(7, 45), None])
+        ws.append(["INCONNU", "03/03/2026", "08:00", "17:00"])
+        buf = io.BytesIO(); wb.save(buf)
+        r = self.client.post(reverse("importer"), {"type": "pointages", "action": "importer",
+                                                   "fichier": self._fichier("p.xlsx", buf.getvalue())})
+        rap = r.context["rapport"]
+        self.assertEqual((rap["crees"], len(rap["erreurs"])), (2, 1))
+        self.assertEqual(Pointage.objects.get(personne=t).duration(), "8:30")
+        r = self.client.post(reverse("importer"), {"type": "pointages", "action": "importer",
+                                                   "fichier": self._fichier("p.xlsx", buf.getvalue())})
+        self.assertEqual(r.context["rapport"]["ignores"], 2)
+
+    def test_modeles(self):
+        self.client.force_login(self.admin)
+        for t in ("employes", "pointages"):
+            r = self.client.get(reverse("importer_modele", args=[t]))
+            self.assertEqual(r.content[:2], b"PK")
+
+
+class SoldeFifoTests(Base):
+    def test_reliquat_utilise_en_premier(self):
+        from .conges import soldes
+        self.p.date_entree = date(2024, 1, 1)
+        self.p.save()
+        # Les 10 jours de 2025 puis les 12 de 2026 sont pris d'abord sur 2024 (18 j), puis sur 2025.
+        Conge.objects.create(personne=self.p, debut=date(2025, 3, 2), fin=date(2025, 3, 13))  # 10 jours ouvrés
+        Conge.objects.create(personne=self.p, debut=date(2026, 3, 2), fin=date(2026, 3, 14))  # 12 jours ouvrés
+        s = soldes(self.p, aujourd_hui=date(2026, 11, 20))
+        par_annee = {l["annee"]: l for l in s["annees"]}
+        # 2024 : 18 acquis jamais pris, encore valable jusqu'à fin 2026 -> consommé en premier
+        self.assertEqual(par_annee[2024]["pris"], 18)
+        self.assertEqual(par_annee[2025]["pris"], 4)
+        self.assertEqual(s["disponible"], 14 + 18)
+        # En 2027, le reliquat 2024 a disparu et 2025 reste valable
+        s = soldes(self.p, aujourd_hui=date(2027, 1, 10))
+        self.assertTrue({l["annee"]: l for l in s["annees"]}[2024]["expire"])
+
+    def test_prorata_entree_en_cours_annee(self):
+        from .conges import acquis_annee
+        self.p.date_entree = date(2026, 7, 1)
+        self.assertEqual(acquis_annee(self.p, 2026), 9)
