@@ -3,7 +3,7 @@
 sudo apt-get -y update
 sudo apt-get -y upgrade
 sudo apt-get -y install swig libpcsclite-dev libacr38u python3-setuptools build-essential python3-pip git python3-rpi.gpio
-sudo pip3 install django pytz
+sudo pip3 install "django>=4.2,<7" pytz
 
 git clone https://github.com/LudovicRousseau/pyscard.git
 cd pyscard

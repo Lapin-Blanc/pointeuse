@@ -44,6 +44,7 @@ lcd_free_flag = True
 class PointeuseReader(BeidReader):
 
     def on_removed(self):
+        global lcd_free_flag
         print("---------------------")
         print("Card removed")
         print("---------------------")
@@ -55,6 +56,7 @@ class PointeuseReader(BeidReader):
 
 
     def on_inserted(self, card):
+        global lcd_free_flag
         lcd_free_flag = False
         gpio.output(RED_LED, True)
         lcd.clear()

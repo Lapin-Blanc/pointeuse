@@ -15,7 +15,7 @@ class Personne(models.Model):
 
     nom = models.CharField(max_length=100)
     prenoms = models.CharField("Prénom(s)", max_length=100)
-    suffixe = models.CharField("Prénom(s)", max_length=20, blank=True)
+    suffixe = models.CharField("Suffixe", max_length=20, blank=True)
 
     date_naissance = models.DateField("Date de naissance", blank=True, null=True)
     lieu_naissance = models.CharField(max_length=100, blank=True)
@@ -35,7 +35,7 @@ class Personne(models.Model):
 
 class Pointage(models.Model):
     
-    personne = models.ForeignKey(Personne())
+    personne = models.ForeignKey(Personne, on_delete=models.PROTECT)
     checkin = models.DateTimeField("Heure d'arrivée")
     checkout = models.DateTimeField("Heure de départ", null=True, blank=True)
 
