@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django import forms
 from django.utils import timezone
 
-from .models import Personne, Pointage, Service, Ville
+from .models import Personne, Service, Ville
 
 
 class DateInput(forms.DateInput):

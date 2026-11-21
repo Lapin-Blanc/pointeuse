@@ -2,12 +2,12 @@ from datetime import date, datetime, time as time_obj, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from . import stats
-from .models import Conge, Journal, JourFerie, Personne, Pointage, Service, Ville, jours_ouvres
+from .models import Conge, Journal, JourFerie, Personne, Pointage, Service, Ville
 from .services import ARRIVEE, GROUPE_POINTEUR, SORTIE, TROP_COURT, pointer
 
 

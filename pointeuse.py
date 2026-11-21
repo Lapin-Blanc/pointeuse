@@ -13,7 +13,7 @@ from RPi import GPIO as gpio
 gpio.setmode(gpio.BCM)
 from Adafruit_CharLCD import Adafruit_CharLCD as LCD
 
-from pointages.models import Personne, Pointage
+from pointages.models import Personne
 from pointages.services import ARRIVEE, SORTIE, pointer
 
 from pythonbeid.beid import BeidReader

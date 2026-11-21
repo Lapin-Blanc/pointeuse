@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 
 from . import stats
 from .forms import LieuForm, PersonneForm, PointageManuelForm
-from .models import Conge, Journal, Personne, Pointage, Service, Ville
+from .models import Journal, Personne, Pointage, Service, Ville
 from .services import ARRIVEE, SORTIE, TROP_COURT, est_admin, est_pointeur, pointer
 
 
